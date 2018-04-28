@@ -1,0 +1,482 @@
+<html>
+  <head>
+    <title>John Grando Beginner Homework</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <style>
+  h1, h2, h3 {
+    text-align: center;
+  }
+  div.tooltip {
+    position: absolute;
+    text-align: center;
+    vertical-align: baseline;
+    width: 200px;
+    height: 40px;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+  }
+  </style>
+  <body>
+    <h1>New York City Energy Consumption</h1>
+    <h2>As Indicated by Local Law 84</h2>
+    <h3>DATA 608 Final Project By John Grando</h3>
+    <br></br>
+    <h3 style="text-align: left">Notes</h3>
+    <p style="text-align: left">
+      The data has been downloaded and manipulated with a python script that converts final cleaned .csv files located at
+      this <a href="https://github.com/john-grando/data608_files">repository</a>.
+    </p>
+    <p style="text-align: left">
+      Pertaining to the graphics below, I started with some static visualizations but I figured I should get started on the interactive portion since I
+      had the time.  Also, I figured I could get more meaingful feedback this way.  My goal here is to let people filter
+      to specific situations/setups.  I start by allowing the user to pick the year set and building types.  I then let
+      the user picke the lower and upper range of values.  This really makes a difference on performance so I figured people
+      could tighten the range if the visualizations were really dragging their sysems down.  I'm trying to think of ways to
+      pre-filter the data before loading but I didn't want to just start cropping information for the sake of speed.  So,
+      if you are having trouble with the visualzation, you can just tighten the range.  <b><i>I would greatly appreciate any feedback you
+      may have when it comes to performance improvements.</b></i></p>
+    <p style="text-align: left">
+      Additionally, my intention is to link the histogram data to filter the geojson map so that only the selected
+      data shows up.  I'm trying to consider how much data a user would want to drill down to in the histograms.  For example, I could
+      work on providing an on_click function that provides a list of selected buildings; however, i'm not sure if that is really "useful".
+      The scatter and histogram plots are done in
+      plotly and the bottom map is done in d3.js.  I thought it would be interesting to figure out how these can work together in
+      the same page so that's why I mixed and matched.
+    </p>
+    <p style="text-align: left">
+      FYI, i'm working on the color schemes, apologies.
+    </p>
+    <h3 style="text-align: left">Year</h3>
+    <div id="yearTypes">
+      <input type="checkbox" class="yearCheckbox" value="2016" checked="checked"> 2016
+      <input type="checkbox" class="yearCheckbox" value="2017" checked="checked"> 2017
+    </div>
+    <h3 style="text-align: left">Building Types</h3>
+    <div id="buildingTypes">
+      <input type="checkbox" class="buildingTypeCheckbox" value="Multifamily Housing" checked="checked"> Multifamily Housing
+      <input type="checkbox" class="buildingTypeCheckbox" value="Office"> Office
+      <input type="checkbox" class="buildingTypeCheckbox" value="Non-Refrigerated Warehouse"> Non-Refrigerated Warehouse
+      <input type="checkbox" class="buildingTypeCheckbox" value="Hotel"> Hotel
+      <input type="checkbox" class="buildingTypeCheckbox" value="Residence Hall/Dormitory"> Residence Hall/Dormitory
+      <input type="checkbox" class="buildingTypeCheckbox" value="Senior Care Community"> Senior Care Community
+      <input type="checkbox" class="buildingTypeCheckbox" value="K-12 School"> K-12 School
+      <input type="checkbox" class="buildingTypeCheckbox" value="Retail Store"> Retail Store
+      <input type="checkbox" class="buildingTypeCheckbox" value="Self-Storage Facility"> Self-Storage Facility
+      <input type="checkbox" class="buildingTypeCheckbox" value="College/University"> College/Univserty
+      <input type="checkbox" class="buildingTypeCheckbox" value="Distribution Center"> Distribution Center
+      <input type="checkbox" class="buildingTypeCheckbox" value="Hospital (General Medical & Surgical)"> Hospital (General Medical & Surgical)
+      <input type="checkbox" class="buildingTypeCheckbox" value="Parking"> Parking
+      <input type="checkbox" class="buildingTypeCheckbox" value="Medical Office"> Medical Office
+      <input type="checkbox" class="buildingTypeCheckbox" value="Other"> Other
+    </div>
+    <h3 style="text-align: left">Meter Types</h3>
+    <div id="plot_selector">
+      Metered Type: <select class="metered_type">
+        <option value="euiKbtuSf" selected="selected">EUI KBtu Per SF</option>
+        <option value="steamKbtuSf">Steam KBtu Per SF</option>
+        <option value="naturalGasKbtuSf">Nat. Gas KBtu Per SF</option>
+        <option value="electricityKbtuSf">Elec. KBtu Per SF</option>
+        <option value="totalGhgSf">Total GHG mmco2e Per SF</option>
+        <option value="directGhgSf">Direct GHG mmco2e Per SF</option>
+        <option value="indirectGhgSf">Indirect GHG mmco2e Per SF</option>
+      </select>
+    </div>
+    <h3 style="text-align: left">Minimum and Maximum Values</h3>
+    <div id="extremeValues">
+      <input id="minValueAllowed" type="number" step="1", value="0">
+      <input id="maxValueAllowed" type="number" step="1", value="500">
+    </div>
+    <br></br>
+    <div id="tester" style="width: 100%; height: 500px;"></div>
+    <div id="tester1" style="width: 100%; height: 50px;"></div>
+    <br></br>
+    <h3 style='font-size: 24px; color: darkgrey'>Geo Map</h3>
+    <div id="geodiv"></div>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+      function precisionRound(number, precision) {
+        var factor = Math.pow(10, precision);
+        return Math.round(number * factor) / factor;
+      }
+
+      testerElement = document.getElementById('tester');
+      tester1Element = document.getElementById('tester1');
+
+      Plotly.d3.csv('https://raw.githubusercontent.com/john-grando/data608_files/master/ll84_plot_df.csv', function(err, rows){
+        function unpack(rows, key) {
+            return rows.map(function(row) { return row[key]; });
+        }
+        var buildingTypes = unpack(rows, 'first_area_type'),
+        streetNumber = unpack(rows, 'street_number'),
+        streetName = unpack(rows, 'street_name'),
+        yearRecorded = unpack(rows, "year")
+        yearBuilt = unpack(rows, 'year_built'),
+        grossFloorArea = unpack(rows, 'gross_floor_area'),
+        euiKbtuSf = unpack(rows, 'eui_kbtu_sf'),
+        steamKbtuSf = unpack(rows, 'steam_kbtu_sf'),
+        naturalGasKbtuSf = unpack(rows, 'natural_gas_kbtu_sf'),
+        electricityKbtuSf = unpack(rows, 'electricity_kbtu_sf'),
+        totalGhgSf = unpack(rows, 'total_ghg_mmco2e_sf'),
+        directGhgSf = unpack(rows, 'direct_ghg_mmco2e_sf'),
+        indirectGhgSf = unpack(rows, 'indirect_ghg_mmco2e_sf');
+
+        //Format circle color and size
+        var color = d3.scaleQuantize()
+          .range(["#3498DB", "#1ABC9C", "#2ECC71", "#E67E22", "#F39C12", "#F1C40F", "#D35400"]);
+        var dotsize = d3.scaleLinear()
+          .range([1,10])
+        //get and load Data
+        d3.csv("https://raw.githubusercontent.com/john-grando/data608_files/master/ll84_geo_df.csv", function(d) {
+          return {
+            bbl : +d.bbl,
+            first_area_type : d.first_area_type,
+            street_number : d.street_number,
+            street_name : d.street_name,
+            year: d.year,
+            metered_type: d.metered_type,
+            value: +d.value,
+            lon : +d.lon,
+            lat : +d.lat
+          };
+        }, function(error, geodata) {
+          // Start graphing
+          var div = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+          // Width and Height of the whole visualization
+          var width = 960;
+          var height =720;
+          // Create SVG
+          var svg = d3.select( "#geodiv" )
+            .append("center")
+            .append( "svg" )
+            .attr( "width", width )
+            .attr( "height", height );
+          // Append empty placeholder g element to the SVG
+          // g will contain geometry elements
+          var g = svg.append( "g" );
+          // Create a unit projection.
+          var projection = d3.geoAlbers()
+            .scale(1)
+            .translate([0, 0]);
+          // Create a path generator.
+          var geoPath = d3.geoPath()
+            .projection(projection);
+          d3.json("https://raw.githubusercontent.com/john-grando/data608_files/master/manhattan.geojson", function (error, mapData){
+            // Compute the bounds of a feature of interest, then derive scale & translate.
+            var b = geoPath.bounds(mapData),
+            s = .95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
+            t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+            // Update the projection to use computed scale & translate.
+            projection
+              .scale(s)
+              .translate(t);
+            g.selectAll( "path" )
+              .data( mapData.features )
+              .enter()
+              .append( "path" )
+              .attr( "fill", "#ccc" )
+              .attr( "stroke", "#333")
+              .attr( "d", geoPath );
+
+            var choices;
+            var yearChoices;
+
+            var meteredTypeObject = {euiKbtuSf: euiKbtuSf, steamKbtuSf: steamKbtuSf, naturalGasKbtuSf: naturalGasKbtuSf,
+            electricityKbtuSf: electricityKbtuSf, totalGhgSf: totalGhgSf, directGhgSf: directGhgSf, indirectGhgSf: indirectGhgSf}
+
+            var d3MeteredTypeObject = {euiKbtuSf: "eui_kbtu_sf", steamKbtuSf: "steam_kbtu_sf", naturalGasKbtuSf: "natural_gas_kbtu_sf",
+            electricityKbtuSf: "electricity_kbtu_sf", totalGhgSf: "total_ghg_mmco2e_sf", directGhgSf: "direct_ghg_mmco2e_sf", indirectGhgSf: "indirect_ghg_mmco2e_sf"}
+
+            meteredTypeSelector = document.querySelector('.metered_type');
+            meteredTypeSelector.addEventListener('change', updateMeteredType, false);
+
+            //Make checkboxes active
+            var el = document.getElementById('buildingTypes');
+            var bt = el.getElementsByTagName('input');
+            for (var i=0, len=bt.length; i<len; i++) {
+                if ( bt[i].type === 'checkbox' ) {
+                    bt[i].onclick = function() {
+                        updateMeteredType(meteredTypeSelector.value);
+                    }
+                }
+            }
+            //Make checkboxes active
+            var el2 = document.getElementById('yearTypes');
+            var bt2 = el2.getElementsByTagName('input');
+            for (var i=0, len=bt2.length; i<len; i++) {
+                if ( bt2[i].type === 'checkbox' ) {
+                    bt2[i].onclick = function() {
+                        updateMeteredType(meteredTypeSelector.value);
+                    }
+                }
+            }
+            //Make min input active
+            var minInput = document.getElementById("minValueAllowed")
+            minInput.onchange = function() {
+              updateMeteredType(meteredTypeSelector.value);
+            };
+            //Make max input active
+            var maxInput = document.getElementById("maxValueAllowed")
+            maxInput.onchange = function() {
+              updateMeteredType(meteredTypeSelector.value);
+            };
+            updateMeteredType(meteredTypeSelector.value);
+            //Update all charts, subplots nested
+            function updateMeteredType(){
+              //Main plot
+              valueFormat = []
+              valueFormat = meteredTypeObject[meteredTypeSelector.value]
+              var data = [];
+              var layout = {
+                title: "Building Distributions",
+                titlefont: {
+                  size: 24,
+                  color: "darkgrey"
+                },
+                //dragmode: 'lasso',
+                xaxis: {
+                  title: "Year",
+                  titlefont: {
+                    size: 18
+                  },
+                  zeroline: false,
+                },
+                yaxis: {
+                  type: "log",
+                  title: "Building Gross Floor Area (Log)",
+                  titlefont: {
+                    size: 18
+                  },
+                  autorange: "true"
+                },
+                hovermode: 'closest',
+              };
+              //Get selected checkboxes
+              choices = [];
+              d3.selectAll(".buildingTypeCheckbox").each(function(d){
+                cb = d3.select(this);
+                if(cb.property("checked")){
+                  choices.push(cb.property("value"));
+                }
+              });
+              //Get selected checkboxes
+              yearChoices = [];
+              d3.selectAll(".yearCheckbox").each(function(d){
+                cbYear = d3.select(this);
+                if(cbYear.property("checked")){
+                  yearChoices.push(cbYear.property("value"));
+                }
+              });
+              //Format values to numbers and get maximum value
+              for (i = 0; i < valueFormat.length; i++) {
+                valueFormat[i] = +valueFormat[i]
+              };
+              //set max and minimum values
+              var minAllowed = document.getElementById('minValueAllowed').value;
+              var maxAllowed = document.getElementById('maxValueAllowed').value;
+              var maxVal = 0;
+              for (h=0; h<yearChoices.length; h++) {
+                for (i=0; i<choices.length; i++) {
+                  for (j=0; j<buildingTypes.length; j++) {
+                    if (valueFormat[j] > maxVal && valueFormat[j] < maxAllowed && yearChoices[h] == yearRecorded[j] && choices[i] == buildingTypes[j]) {
+                      maxVal = valueFormat[j]
+                    }
+                  };
+                };
+              };
+              k = 0
+              Plotly.newPlot(testerElement, data, layout);
+              for (i=0; i<choices.length; i++) {
+                var subParsedValueFormat = []
+                var subValueFormat = []
+                var subGrossFloorArea = []
+                var subYearValue = []
+                var subTextInfo = []
+                var k = 0
+                for (h=0; h<yearChoices.length; h++) {
+                  for (j=0; j<buildingTypes.length; j++) {
+                    if(valueFormat[j] > minAllowed && valueFormat[j] < maxAllowed && yearChoices[h] == yearRecorded[j] && choices[i] == buildingTypes[j]) {
+                      subParsedValueFormat[k] = Math.min(Math.max(valueFormat[j] / maxVal * 20 , 3), 20)
+                      subValueFormat[k] = valueFormat[j]
+                      subYearValue[k] = yearBuilt[j]
+                      subGrossFloorArea[k] = grossFloorArea[j]
+                      subTextInfo[k] = streetNumber[j] + " " + streetName[j] + "<br>" + "value : " + precisionRound(valueFormat[j], 6) + "<br>" + "year : " + yearRecorded[j]
+                      k = k+1
+                    }
+                  };
+                };
+                Plotly.addTraces(testerElement, {
+                  x: subYearValue,
+                  y: subGrossFloorArea,
+                  mode: 'markers',
+                  name: choices[i],
+                  marker: {
+                    size: subParsedValueFormat
+                  },
+                  hoverinfo: "subYearValue+subGrossFloorArea",
+                  text: subTextInfo
+                });
+              };
+              //Initial message on load
+              tester1Element.innerHTML = '<p style="font-size: 200%" id="oldText">Please Select Data For Subplots</p>'
+              //make subplots on selection
+              testerElement.on('plotly_selected', function(eventData) {
+                document.getElementById('tester1').style.height = "500px"
+                tester1Element.innerHTML = '<p style="font-size: 200%" id="oldText"></p>'
+                var oldText = document.getElementById("oldText");
+                oldText.parentNode.removeChild(oldText);
+                var xPoint = [];
+                var yPoint = [];
+                var subVals = [];
+                for (i=0; i<eventData.points.length; i++) {
+                  xPoint[i] = eventData.points[i].x
+                  yPoint[i] = eventData.points[i].y
+                  myRegExp = /(value\s?\:\s?)(\d+\.*\d*)/g;
+                  match = myRegExp.exec(eventData.points[i].text);
+                  subVals[i] = parseFloat(match[2]);
+                };
+                var data1 = [{
+                  type: 'histogram',
+                  x: xPoint,
+                  name: 'Year'
+                  //marker: {color: colorX}
+                }, {
+                  type: 'histogram',
+                  x: yPoint,
+                  xaxis: 'x2',
+                  yaxis: 'y2',
+                  name: 'GFA'
+                  //marker: {color: colorY}
+                }, {
+                  type: 'histogram',
+                  x: subVals,
+                  xaxis: 'x3',
+                  yaxis: 'y3',
+                  name: 'Value'
+                  //marker: {color: colorY}
+                }];
+                var layout1 = {
+                  title: "Histogram Subplots",
+                  showlegend: false,
+                  titlefont: {
+                    size: 24,
+                    color: "darkgrey"
+                  },
+                  //dragmode: 'lasso',
+                  xaxis: {
+                    zeroline: false,
+                    domain: [0,0.31]
+                  },
+                  yaxis: {
+                    type: "linear",
+                    autorange: "true"
+                  },
+                  xaxis2: {
+                    zeroline: false,
+                    type: 'linear',
+                    domain: [0.33,0.64]
+                  },
+                  yaxis2: {
+                    type: "log",
+                    anchor: 'x2'
+                  },
+                  xaxis3: {
+                    zeroline: false,
+                    type: 'linear',
+                    domain: [0.66,1]
+                  },
+                  yaxis3: {
+                    type: "linear",
+                    anchor: 'x3'
+                  },
+                  hovermode: 'closest',
+                  annotations: [{
+                    x: 0.125,
+                    y: 1.1,
+                    text: "Year",
+                    xref: "paper",
+                    yref: "paper",
+                    showarrow: false,
+                    font: {
+                      size: 24,
+                      color: 'darkgrey'
+                    }
+                  }, {
+                    x: 0.5,
+                    y: 1.1,
+                    text: "Gross Floor Area",
+                    xref: "paper",
+                    yref: "paper",
+                    showarrow: false,
+                    font: {
+                      size: 24,
+                      color: 'darkgrey'
+                    }
+                  }, {
+                      x: 0.85,
+                      y: 1.1,
+                      text: "Value",
+                      xref: "paper",
+                      yref: "paper",
+                      showarrow: false,
+                      font: {
+                        size: 24,
+                        color: 'darkgrey'
+                      }
+                  }]
+                };
+                Plotly.newPlot(tester1Element, data1, layout1);
+              });
+              updateGeo()
+              //Update based on selection box change
+              function updateGeo(){
+                svg.selectAll('circle').remove()
+                //filter values
+                ll84_e_data_sub = geodata.filter(function(d,i){return d.metered_type == d3MeteredTypeObject[meteredTypeSelector.value] && d.value < maxAllowed && d.value > minAllowed && choices.includes(d.first_area_type) && yearChoices.includes(d.year);});
+                //rescale colors
+                color.domain(d3.extent(ll84_e_data_sub, function(d,i){return d.value;}));
+                dotsize.domain(d3.extent(ll84_e_data_sub, function(d,i){return d.value}));
+                // order dots so the biggest ones are on top
+                ll84_e_data_sub = ll84_e_data_sub.sort(function(x, y) {return d3.ascending(x.value, y.value)});
+                // Circles
+                var circles = svg.selectAll('circle')
+                  .data(ll84_e_data_sub)
+                  .enter()
+                  .append('circle')
+                    .attr('cx',function (d) { return projection([d.lon, d.lat])[0] })
+                    .attr('cy',function (d) { return projection([d.lon, d.lat])[1] })
+                    .attr("r", function(d) {
+                      return dotsize(d.value)
+                    })
+                    .attr("fill", function(d) {
+                      return color(d.value)
+                    })
+                    .on("mouseover", function(d) {
+                      div.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                      div.html(d.street_number + " " + d.street_name + "<br/>" + "value : " + precisionRound(d.value,6) + "<br/>" + "year : " + d.year)
+                        .style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px");
+                    })
+                    .on("mouseout", function(d) {
+                      div.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                    });
+              };
+            };
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
