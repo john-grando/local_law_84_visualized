@@ -29,7 +29,7 @@
     <h3 style="text-align: left">Notes</h3>
     <p style="text-align: left">
       The data has been downloaded and manipulated with a python script that converts final cleaned .csv files located at
-      this <a href="https://github.com/john-grando/data608_files">repository</a>.
+      this <a href="https://github.com/john-grando/local_law_84_visualized">repository</a>.
     </p>
     <p style="text-align: left">
       Pertaining to the graphics below, I started with some static visualizations but I figured I should get started on the interactive portion since I
@@ -63,8 +63,8 @@
       <input type="checkbox" class="buildingTypeCheckbox" value="Non-Refrigerated Warehouse"> Non-Refrigerated Warehouse
       <input type="checkbox" class="buildingTypeCheckbox" value="Hotel"> Hotel
       <input type="checkbox" class="buildingTypeCheckbox" value="Residence Hall/Dormitory"> Residence Hall/Dormitory
-      <input type="checkbox" class="buildingTypeCheckbox" value="Senior Care Community"> Senior Care Community
       <input type="checkbox" class="buildingTypeCheckbox" value="K-12 School"> K-12 School
+      <input type="checkbox" class="buildingTypeCheckbox" value="Senior Care Community"> Senior Care Community
       <input type="checkbox" class="buildingTypeCheckbox" value="Retail Store"> Retail Store
       <input type="checkbox" class="buildingTypeCheckbox" value="Self-Storage Facility"> Self-Storage Facility
       <input type="checkbox" class="buildingTypeCheckbox" value="College/University"> College/Univserty
@@ -109,7 +109,7 @@
       testerElement = document.getElementById('tester');
       tester1Element = document.getElementById('tester1');
 
-      Plotly.d3.csv('https://raw.githubusercontent.com/john-grando/data608_files/master/ll84_plot_df.csv', function(err, rows){
+      Plotly.d3.csv('https://raw.githubusercontent.com/john-grando/local_law_84_visualized/master/Data/csv/ll84_plot_df.csv', function(err, rows){
         function unpack(rows, key) {
             return rows.map(function(row) { return row[key]; });
         }
@@ -133,7 +133,7 @@
         var dotsize = d3.scaleLinear()
           .range([1,10])
         //get and load Data
-        d3.csv("https://raw.githubusercontent.com/john-grando/data608_files/master/ll84_geo_df.csv", function(d) {
+        d3.csv("https://raw.githubusercontent.com/john-grando/local_law_84_visualized/master/Data/csv/ll84_geo_df.csv", function(d) {
           return {
             bbl : +d.bbl,
             first_area_type : d.first_area_type,
@@ -169,7 +169,7 @@
           // Create a path generator.
           var geoPath = d3.geoPath()
             .projection(projection);
-          d3.json("https://raw.githubusercontent.com/john-grando/data608_files/master/manhattan.geojson", function (error, mapData){
+          d3.json("https://raw.githubusercontent.com/john-grando/local_law_84_visualized/master/Data/manhattan.geojson", function (error, mapData){
             // Compute the bounds of a feature of interest, then derive scale & translate.
             var b = geoPath.bounds(mapData),
             s = .95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
@@ -434,6 +434,9 @@
                   }]
                 };
                 Plotly.newPlot(tester1Element, data1, layout1);
+                //tester1Element.on('plotly_selected', function(subEventData) {
+                //  console.log(subEventData)
+                //});
               });
               updateGeo()
               //Update based on selection box change

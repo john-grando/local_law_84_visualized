@@ -141,9 +141,10 @@ def clean_df(df = None):
         dff.loc[df["water_kgal"] < 0, "water_kgal"] = np.nan
         dff.loc[df["wui_gal_sf"] < 0, "wui_gal_sf"] = np.nan
         dff.loc[df["steam_kbtu"] < 0, "steam_kbtu"] = np.nan
-        area_type_list = df[["bbl","first_area_type"]].groupby(["first_area_type"]).count().reset_index().sort_values(by=["bbl"], ascending=False)["first_area_type"].tolist()[:15]
+        dff.loc[df["first_area_type"] == "See Primary BBL", "first_area_type"] = ""
+        area_type_list = dff[["bbl","first_area_type"]].groupby(["first_area_type"]).count().reset_index().sort_values(by=["bbl"], ascending=False)["first_area_type"].tolist()[:15]
         print(area_type_list)
-        dff.loc[~df["first_area_type"].isin(area_type_list), "first_area_type"] = "other"
+        dff.loc[~df["first_area_type"].isin(area_type_list), "first_area_type"] = "Other"
         dff["steam_kbtu_sf"] = dff["steam_kbtu"] / dff["gross_floor_area"]
         dff["natural_gas_kbtu_sf"] = dff["natural_gas_kbtu"] / dff["gross_floor_area"]
         dff["electricity_kbtu_sf"] = dff["electricity_kbtu"] / dff["gross_floor_area"]
