@@ -1,26 +1,8 @@
 <html>
   <head>
     <title>John Grando Beginner Homework</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
   </head>
-  <style>
-  h1, h2, h3 {
-    text-align: center;
-  }
-  div.tooltip {
-    position: absolute;
-    text-align: center;
-    vertical-align: baseline;
-    width: 200px;
-    height: 40px;
-    padding: 2px;
-    font: 12px sans-serif;
-    background: lightsteelblue;
-    border: 0px;
-    border-radius: 8px;
-    pointer-events: none;
-  }
-  </style>
   <body>
     <h1>New York City Energy Consumption</h1>
     <h2>As Indicated by Local Law 84</h2>
@@ -438,15 +420,15 @@
                 //  console.log(subEventData)
                 //});
               });
-              updateGeo()
+              updateGeo(1)
               //Update based on selection box change
-              function updateGeo(){
+              function updateGeo(scale){
                 svg.selectAll('circle').remove()
                 //filter values
                 ll84_e_data_sub = geodata.filter(function(d,i){return d.metered_type == d3MeteredTypeObject[meteredTypeSelector.value] && d.value < maxAllowed && d.value > minAllowed && choices.includes(d.first_area_type) && yearChoices.includes(d.year);});
                 //rescale colors
                 color.domain(d3.extent(ll84_e_data_sub, function(d,i){return d.value;}));
-                dotsize.domain(d3.extent(ll84_e_data_sub, function(d,i){return d.value}));
+                dotsize.domain(d3.extent(ll84_e_data_sub, function(d,i){return d.value / Math.sqrt(scale)}));
                 // order dots so the biggest ones are on top
                 ll84_e_data_sub = ll84_e_data_sub.sort(function(x, y) {return d3.ascending(x.value, y.value)});
                 // Circles
@@ -454,10 +436,10 @@
                   .data(ll84_e_data_sub)
                   .enter()
                   .append('circle')
-                    .attr('cx',function (d) { return projection([d.lon, d.lat])[0] })
-                    .attr('cy',function (d) { return projection([d.lon, d.lat])[1] })
+                    .attr('cx',function (d) { return projection([d.lon, d.lat])[0]})
+                    .attr('cy',function (d) { return projection([d.lon, d.lat])[1]})
                     .attr("r", function(d) {
-                      return dotsize(d.value)
+                      return dotsize(Math.max(d.value / scale, dotsize.domain()[0]))
                     })
                     .attr("fill", function(d) {
                       return color(d.value)
@@ -475,6 +457,17 @@
                         .duration(500)
                         .style("opacity", 0);
                     });
+                var zoom_handler = d3.zoom()
+                  .on("zoom", zoom_actions);
+                  //specify what to do when zoom event listener is triggered
+                function zoom_actions(){
+                  svg.attr("transform", d3.event.transform);
+                  console.log(d3.event.transform.k);
+                  updateGeo(d3.event.transform.k);
+                }
+                //add zoom behaviour to the svg element backing our graph.
+                //same thing as svg.call(zoom_handler);
+                zoom_handler(svg);
               };
             };
           });
