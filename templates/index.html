@@ -119,7 +119,7 @@
             </tr>
             <tr>
               <td><input id="minValueAllowed" type="number" step="1", value="0"></td>
-              <td><input id="maxValueAllowed" type="number" step="1", value="500"></td>
+              <td><input id="maxValueAllowed" type="number" step="1", value="10000000"></td>
             </tr>
           </table>
         </div>
@@ -299,7 +299,6 @@
           for (var i=0, len=bt.length; i<len; i++) {
             if ( bt[i].type === 'checkbox' ) {
               bt[i].onclick = function() {
-                tester1Element.innerHTML = '<p style="font-size: 24px;" id="oldText">Please Select Data For Subplots</p>'
                 updateMeteredType(meteredTypeSelector.value);
               }
             }
@@ -310,7 +309,6 @@
           for (var i=0, len=bt2.length; i<len; i++) {
             if ( bt2[i].type === 'checkbox' ) {
               bt2[i].onclick = function() {
-                tester1Element.innerHTML = '<p style="font-size: 24px;" id="oldText">Please Select Data For Subplots</p>'
                 updateMeteredType(meteredTypeSelector.value);
               }
             }
@@ -328,6 +326,8 @@
           updateMeteredType(meteredTypeSelector.value);
           //Update all charts, subplots nested
           function updateMeteredType(){
+            tester1Element.innerHTML = '<p style="font-size: 24px;" id="oldText">Please Select Data For Subplots</p>'
+            document.getElementById('tester1').style.height = "50px";
             //Main plot
             valueFormat = []
             valueFormat = meteredTypeObject[meteredTypeSelector.value]
@@ -427,7 +427,8 @@
               });
             };
             //Initial message on load
-            tester1Element.innerHTML = '<p style="font-size: 24px;" id="oldText">Please Select Data For Subplots</p>'
+            tester1Element.innerHTML = '<p style="font-size: 24px;" id="oldText">Please Select Data For Subplots</p>';
+            document.getElementById('tester1').style.height = "50px";
             //make subplots on selection
             testerElement.on('plotly_selected', function(eventData) {
               document.getElementById('tester1').style.height = "500px"
@@ -473,7 +474,7 @@
               var layout1 = {
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)',
-                title: "Histogram Subplots",
+                title: "Consumption Subplots",
                 showlegend: false,
                 titlefont: {
                   size: 24,
