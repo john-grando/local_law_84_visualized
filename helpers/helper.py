@@ -157,8 +157,8 @@ def clean_df(df = None):
 
 def geo_df(df = None):
     if df is not None:
-        dff = df[["bbl", "street_number", "street_name", "first_area_type", "lon", "lat", "year", "eui_kbtu_sf", "steam_kbtu_sf", "natural_gas_kbtu_sf", "electricity_kbtu_sf", "total_ghg_mmco2e_sf", "direct_ghg_mmco2e_sf", "indirect_ghg_mmco2e_sf"]]
-        dff = pd.melt(dff, id_vars = ["bbl", "street_number", "street_name", "first_area_type", "lon", "lat", "year"], var_name="metered_type", value_name="value").sort_values(["value"])
+        dff = df[["bbl", "street_number", "street_name", "first_area_type", "lon", "lat", "year", "year_built", "gross_floor_area",  "eui_kbtu_sf", "steam_kbtu_sf", "natural_gas_kbtu_sf", "electricity_kbtu_sf", "total_ghg_mmco2e_sf", "direct_ghg_mmco2e_sf", "indirect_ghg_mmco2e_sf"]]
+        dff = pd.melt(dff, id_vars = ["bbl", "street_number", "street_name", "first_area_type", "lon", "lat", "year", "year_built", "gross_floor_area"], var_name="metered_type", value_name="value").sort_values(["value"])
         dff = dff[(dff["value"] > 0) & (np.isfinite(dff["value"]))]
     else:
         dff = None

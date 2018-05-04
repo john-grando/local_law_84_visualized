@@ -86,7 +86,7 @@
               <th colspan="2" id="table-headers">Submittal Year</th>
             </tr>
             <tr>
-              <td><input type="checkbox" class="yearCheckbox" value="2016" checked="checked"> 2016</td>
+              <td><input type="checkbox" class="yearCheckbox" value="2016"> 2016</td>
               <td><input type="checkbox" class="yearCheckbox" value="2017" checked="checked"> 2017</td>
             </tr>
           </table>
@@ -204,7 +204,7 @@
     var new_scale;
 
     // color ranges from https://gka.github.io/palettes/#colors=lightblue,darkblue|steps=15|bez=1|coL=1
-    // '#add8e6','#a5c8e0','#9cb8d9','#94a9d3','#8b99cd','#828bc6','#787bc0','#6f6db9','#645fb3','#5a51ac','#4e42a6','#42349f','#342598','#221492','#00008b'
+    var colorArray = ['#4682b4','#aca1c0','#ffc0cb','#9da977','#228b22','#976c30','#dc143c','#f59d35','#ffff00','#9fbd61','#008080','#15403f','#000000','#411140','#800080']
     Plotly.d3.csv('https://raw.githubusercontent.com/john-grando/local_law_84_visualized/master/Data/csv/ll84_plot_df.csv', function(err, rows){
       function unpack(rows, key) {
           return rows.map(function(row) { return row[key]; });
@@ -225,7 +225,7 @@
 
       //Format circle color and size
       var color = d3.scaleQuantize()
-        .range(['#90ee90','#87e486','#7ed97c','#74ce71','#6bc468','#62bb5e','#59b154','#50a64a','#469c40','#3d9337','#348a2d','#298023','#1f7619','#126d0e','#006400']);
+        .range(['#90ee90', '#87e486', '#7ed97c', '#74ce71', '#6bc468', '#62bb5e', '#59b154', '#50a64a', '#469c40', '#3d9337', '#348a2d', '#298023', '#1f7619', '#126d0e', '#006400']);
       var dotsize = d3.scalePow()
         .exponent(3)
         .range([1,20])
@@ -237,6 +237,8 @@
           street_number : d.street_number,
           street_name : d.street_name,
           year: d.year,
+          year_built: d.year_built,
+          gross_floor_area: d.gross_floor_area,
           metered_type: d.metered_type,
           value: +d.value,
           lon : +d.lon,
@@ -409,7 +411,7 @@
                     subValueFormat[k] = valueFormat[j]
                     subYearValue[k] = yearBuilt[j]
                     subGrossFloorArea[k] = grossFloorArea[j]
-                    subTextInfo[k] = streetNumber[j] + " " + streetName[j] + "<br>" + "value : " + precisionRound(valueFormat[j], 6) + "<br>" + "year : " + yearRecorded[j]
+                    subTextInfo[k] = streetNumber[j] + " " + streetName[j] + "<br>" + "Value : " + precisionRound(valueFormat[j], 6) + "<br>" + "Year : " + yearRecorded[j] + "<br>" + "Year Built : " + yearBuilt[j] + "<br>" + "Building Type : " + buildingTypes[j]
                     k = k+1
                   }
                 };
@@ -420,6 +422,8 @@
                 mode: 'markers',
                 name: choices[i],
                 marker: {
+                  color: colorArray[i],
+                  opacity: 0.75,
                   size: subParsedValueFormat
                 },
                 hoverinfo: "subYearValue+subGrossFloorArea",
@@ -447,22 +451,28 @@
               var data1 = [{
                 type: 'histogram',
                 x: xPoint,
-                name: 'Year'
-                //marker: {color: colorX}
+                name: 'Year',
+                marker: {
+                    color: '#4682B4'
+                }
               }, {
                 type: 'histogram',
                 x: yPoint,
                 xaxis: 'x2',
                 yaxis: 'y2',
-                name: 'GFA'
-                //marker: {color: colorY}
+                name: 'GFA',
+                marker: {
+                    color: '#4682B4'
+                }
               }, {
                 type: 'histogram',
                 x: subVals,
                 xaxis: 'x3',
                 yaxis: 'y3',
-                name: 'Value'
-                //marker: {color: colorY}
+                name: 'Value',
+                marker: {
+                    color: '#4682B4'
+                }
               }];
               var layout1 = {
                 paper_bgcolor: 'rgba(0,0,0,0)',
@@ -473,7 +483,6 @@
                   size: 24,
                   color: "darkgrey"
                 },
-                //dragmode: 'lasso',
                 xaxis: {
                   zeroline: false,
                   domain: [0,0.31]
@@ -537,9 +546,6 @@
                 }]
               };
               Plotly.newPlot(tester1Element, data1, layout1);
-              //tester1Element.on('plotly_selected', function(subEventData) {
-              //  console.log(subEventData)
-              //});
             });
             if (new_scale != null) {
               scale = new_scale
@@ -572,9 +578,9 @@
                     div.transition()
                       .duration(200)
                       .style("opacity", .9);
-                    div.html(d.street_number + " " + d.street_name + "<br/>" + "value : " + precisionRound(d.value,6) + "<br/>" + "year : " + d.year)
+                    div.html(d.street_number + " " + d.street_name + "<br/>" + "Value : " + precisionRound(d.value,6) + "<br/>" + "Year : " + d.year + "<br/>" + "Year Built : " + d.year_built + "<br/>" + "Gross Floor Area : " + d.gross_floor_area + "<br/>" + "Building Type : " + d.first_area_type)
                       .style("left", (d3.event.pageX - 100) + "px")
-                      .style("top", (d3.event.pageY - 80) + "px");
+                      .style("top", (d3.event.pageY - 120) + "px");
                   })
                   .on("mouseout", function(d) {
                     div.transition()
