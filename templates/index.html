@@ -67,18 +67,14 @@
   <div class="container-fluid">
     <div class="row content">
       <div class="col-sm-3 sidenav" id="navbar">
-        <h3 style="text-align: left">Notes</h3>
         <p style="text-align: left">
-          The data has been downloaded and manipulated with a python script that converts final cleaned .csv files located at
+          change geo csv to master branch
+        <p style="text-align: left">
+          New York City has enacted a Greener, Greater Buildings Plan in an attempt to meet aggressive sustainability goals.  One of the regulations enacted, <a href="http://www.nyc.gov/html/gbee/html/plan/ll84.shtml">Local Law 84</a>, requires owners of large buildings to annually measure their energy and water consumption in a process called benchmarking.  This data is then made publicly <a href = "http://www.nyc.gov/html/gbee/html/plan/ll84_scores.shtml">available</a> and provides a massive amount of information about the energy use profile within New York City.
+        </p>
+        <p style="text-align: left">
+          The raw data has been downloaded and manipulated with a python script that converts final cleaned .csv files located at
           this <a href="https://github.com/john-grando/local_law_84_visualized">repository</a>.
-        </p>
-        <p style="text-align: left">
-          Text block
-        <p style="text-align: left">
-          Text block
-        </p>
-        <p style="text-align: left">
-          FYI, i'm working on the color schemes, apologies.
         </p>
         <div id="yearTypes" class="tableDivs">
           <table>
@@ -230,7 +226,7 @@
         .exponent(3)
         .range([1,20])
       //get and load Data
-      d3.csv("https://raw.githubusercontent.com/john-grando/local_law_84_visualized/master/Data/csv/ll84_geo_df.csv", function(d) {
+      d3.csv("https://raw.githubusercontent.com/john-grando/local_law_84_visualized/interim/Data/csv/ll84_geo_df.csv", function(d) {
         return {
           bbl : +d.bbl,
           first_area_type : d.first_area_type,
@@ -444,7 +440,7 @@
               for (i=0; i<eventData.points.length; i++) {
                 xPoint[i] = eventData.points[i].x
                 yPoint[i] = eventData.points[i].y
-                myRegExp = /(value\s?\:\s?)(\d+\.*\d*)/g;
+                myRegExp = /(Value\s?\:\s?)(\d+\.*\d*)/g;
                 match = myRegExp.exec(eventData.points[i].text);
                 subVals[i] = parseFloat(match[2]);
               };
@@ -578,7 +574,7 @@
                     div.transition()
                       .duration(200)
                       .style("opacity", .9);
-                    div.html(d.street_number + " " + d.street_name + "<br/>" + "Value : " + precisionRound(d.value,6) + "<br/>" + "Year : " + d.year + "<br/>" + "Year Built : " + d.year_built + "<br/>" + "Gross Floor Area : " + d.gross_floor_area + "<br/>" + "Building Type : " + d.first_area_type)
+                    div.html(d.street_number + " " + d.street_name + "<br/>" + "Value : " + precisionRound(d.value,6) + "<br/>" + "Submittal Year : " + d.year + "<br/>" + "Year Built : " + d.year_built + "<br/>" + "Gross Floor Area : " + d.gross_floor_area + "<br/>" + "Building Type : " + d.first_area_type)
                       .style("left", (d3.event.pageX - 100) + "px")
                       .style("top", (d3.event.pageY - 120) + "px");
                   })
