@@ -108,6 +108,21 @@
             </tr>
           </table>
         </div>
+        <div id="rangeYears" class="tableDivs">
+          <table>
+            <tr>
+              <th colspan="2" id="table-headers">Year Range</th>
+            </tr>
+            <tr>
+              <th>Minimum</th>
+              <th>Maximum</th>
+            </tr>
+            <tr>
+              <td><input id="minYearAllowed" type="number" step="1", value="1850"></td>
+              <td><input id="maxYearAllowed" type="number" step="1", value="2018"></td>
+            </tr>
+          </table>
+        </div>
         <div id="extremeValues" class="tableDivs">
           <table>
             <tr>
@@ -313,16 +328,27 @@
               }
             }
           }
-          //Make min input active
+          //Make min year input active
+          var minYear = document.getElementById("minYearAllowed")
+          minYear.onchange = function() {
+            updateMeteredType(meteredTypeSelector.value);
+          };
+          //Make max yeah input active
+          var maxYear = document.getElementById("maxYearAllowed")
+          maxYear.onchange = function() {
+            updateMeteredType(meteredTypeSelector.value);
+          };
+          //Make min value input active
           var minInput = document.getElementById("minValueAllowed")
           minInput.onchange = function() {
             updateMeteredType(meteredTypeSelector.value);
           };
-          //Make max input active
+          //Make max input value active
           var maxInput = document.getElementById("maxValueAllowed")
           maxInput.onchange = function() {
             updateMeteredType(meteredTypeSelector.value);
           };
+
           updateMeteredType(meteredTypeSelector.value);
           //Update all charts, subplots nested
           function updateMeteredType(){
@@ -378,6 +404,9 @@
             for (i = 0; i < valueFormat.length; i++) {
               valueFormat[i] = +valueFormat[i]
             };
+            // set max an min year
+            var minYear = document.getElementById('minYearAllowed').value;
+            var maxYear = document.getElementById('maxYearAllowed').value;
             //set max and minimum values
             var minAllowed = document.getElementById('minValueAllowed').value;
             var maxAllowed = document.getElementById('maxValueAllowed').value;
@@ -385,7 +414,7 @@
             for (h=0; h<yearChoices.length; h++) {
               for (i=0; i<choices.length; i++) {
                 for (j=0; j<buildingTypes.length; j++) {
-                  if (valueFormat[j] > maxVal && valueFormat[j] < maxAllowed && yearChoices[h] == yearRecorded[j] && choices[i] == buildingTypes[j]) {
+                  if (valueFormat[j] > maxVal && yearBuilt[j] > minYear && yearBuilt[j] < maxYear && valueFormat[j] < maxAllowed && yearChoices[h] == yearRecorded[j] && choices[i] == buildingTypes[j]) {
                     maxVal = valueFormat[j]
                   }
                 };
@@ -402,7 +431,7 @@
               var k = 0
               for (h=0; h<yearChoices.length; h++) {
                 for (j=0; j<buildingTypes.length; j++) {
-                  if(valueFormat[j] > minAllowed && valueFormat[j] < maxAllowed && yearChoices[h] == yearRecorded[j] && choices[i] == buildingTypes[j]) {
+                  if(valueFormat[j] > minAllowed && valueFormat[j] < maxAllowed && yearBuilt[j] > minYear && yearBuilt[j] < maxYear && yearChoices[h] == yearRecorded[j] && choices[i] == buildingTypes[j]) {
                     subParsedValueFormat[k] = Math.min(Math.max(valueFormat[j] / maxVal * 20 , 3), 20)
                     subValueFormat[k] = valueFormat[j]
                     subYearValue[k] = yearBuilt[j]
@@ -552,7 +581,7 @@
             function updateGeo(scale){
               g.selectAll('circle').remove()
               //filter values
-              ll84_e_data_sub = geodata.filter(function(d,i){return d.metered_type == d3MeteredTypeObject[meteredTypeSelector.value] && d.value < maxAllowed && d.value > minAllowed && choices.includes(d.first_area_type) && yearChoices.includes(d.year);});
+              ll84_e_data_sub = geodata.filter(function(d,i){return d.value < maxAllowed && d.value > minAllowed && d.year_built > minYear && d.year_built < maxYear && choices.includes(d.first_area_type) && yearChoices.includes(d.year) && d.metered_type == d3MeteredTypeObject[meteredTypeSelector.value];});
               //rescale colors
               color.domain(d3.extent(ll84_e_data_sub, function(d,i){return d.value;}));
               dotsize.domain(d3.extent(ll84_e_data_sub, function(d,i){return d.value / Math.pow(scale, 0.5)}));
